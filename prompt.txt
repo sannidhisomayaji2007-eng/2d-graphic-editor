@@ -1,0 +1,760 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define ROWS 30
+#define COLS 60
+#define MAX_OBJECTS 100
+
+char canvas[ROWS][COLS];
+
+typedef struct
+{
+    int id;
+    int type; // 1-Line 2-Rectangle 3-Triangle 4-Circle
+
+    int x1, y1;
+    int x2, y2;
+
+    int width, height;
+    int radius;
+
+} Object;
+
+Object objects[MAX_OBJECTS];
+int count = 0;
+int nextID = 1;
+
+/* ---------------- Canvas Functions ---------------- */
+
+void initCanvas()
+{
+    for(int i = 0; i < ROWS; i++)
+    {
+        for(int j = 0; j < COLS; j++)
+        {
+            canvas[i][j] = '_';
+        }
+    }
+}
+
+void displayCanvas()
+{
+    printf("\n");
+
+    for(int i = 0; i < ROWS; i++)
+    {
+        for(int j = 0; j < COLS; j++)
+        {
+            printf("%c ", canvas[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+/* ---------------- Drawing Functions ---------------- */
+
+void drawLineCanvas(int x1, int y1, int x2, int y2)
+{
+    if(y1 == y2)
+    {
+        if(x1 > x2)
+        {
+            int t = x1;
+            x1 = x2;
+            x2 = t;
+        }
+
+        for(int i = x1; i <= x2; i++)
+        {
+            if(y1 >= 0 && y1 < ROWS && i >= 0 && i < COLS)
+                canvas[y1][i] = '*';
+        }
+    }
+
+    else if(x1 == x2)
+    {
+        if(y1 > y2)
+        {
+            int t = y1;
+            y1 = y2;
+            y2 = t;
+        }
+
+        for(int i = y1; i <= y2; i++)
+        {
+            if(i >= 0 && i < ROWS && x1 >= 0 && x1 < COLS)
+                canvas[i][x1] = '*';
+        }
+    }
+}
+
+void drawRectangleCanvas(int x, int y, int width, int height)
+{
+    for(int i = y; i < y + height; i++)
+    {
+        for(int j = x; j < x + width; j++)
+        {
+            if(i >= 0 && i < ROWS && j >= 0 && j < COLS)
+                canvas[i][j] = '*';
+        }
+    }
+}
+
+void drawTriangleCanvas(int x, int y, int height)
+{
+    for(int i = 0; i < height; i++)
+    {
+        for(int j = x - i; j <= x + i; j++)
+        {
+            if(y + i >= 0 && y + i < ROWS &&
+               j >= 0 && j < COLS)
+            {
+                canvas[y + i][j] = '*';
+            }
+        }
+    }
+}
+
+void drawCircleCanvas(int cx, int cy, int r)
+{
+    for(int y = 0; y < ROWS; y++)
+    {
+        for(int x = 0; x < COLS; x++)
+        {
+            int d = (x - cx)*(x - cx) + (y - cy)*(y - cy);
+
+            if(d <= r*r)
+                canvas[y][x] = '*';
+        }
+    }
+}
+
+/* ---------------- Redraw ---------------- */
+
+void redrawAll()
+{
+    initCanvas();
+
+    for(int i = 0; i < count; i++)
+    {
+        switch(objects[i].type)
+        {
+            case 1:
+                drawLineCanvas(
+                    objects[i].x1,
+                    objects[i].y1,
+                    objects[i].x2,
+                    objects[i].y2
+                );
+                break;
+
+            case 2:
+                drawRectangleCanvas(
+                    objects[i].x1,
+                    objects[i].y1,
+                    objects[i].width,
+                    objects[i].height
+                );
+                break;
+
+            case 3:
+                drawTriangleCanvas(
+                    objects[i].x1,
+                    objects[i].y1,
+                    objects[i].height
+                );
+                break;
+
+            case 4:
+                drawCircleCanvas(
+                    objects[i].x1,
+                    objects[i].y1,
+                    objects[i].radius
+                );
+                break;
+        }
+    }
+}
+
+/* ---------------- Add Objects ---------------- */
+
+void addLine()
+{
+    Object obj;
+
+    obj.id = nextID++;
+    obj.type = 1;
+
+    printf("Enter x1 y1: ");
+    scanf("%d%d", &obj.x1, &obj.y1);
+
+    printf("Enter x2 y2: ");
+    scanf("%d%d", &obj.x2, &obj.y2);
+
+    objects[count++] = obj;
+
+    redrawAll();
+
+    printf("Line Added. ID = %d\n", obj.id);
+}
+
+void addRectangle()
+{
+    Object obj;
+
+    obj.id = nextID++;
+    obj.type = 2;
+
+    printf("Enter x y: ");
+    scanf("%d%d", &obj.x1, &obj.y1);
+
+    printf("Enter width height: ");
+    scanf("%d%d", &obj.width, &obj.height);
+
+    objects[count++] = obj;
+
+    redrawAll();
+
+    printf("Rectangle Added. ID = %d\n", obj.id);
+}
+
+void addTriangle()
+{
+    Object obj;
+
+    obj.id = nextID++;
+    obj.type = 3;
+
+    printf("Enter center x y: ");
+    scanf("%d%d", &obj.x1, &obj.y1);
+
+    printf("Enter height: ");
+    scanf("%d", &obj.height);
+
+    objects[count++] = obj;
+
+    redrawAll();
+
+    printf("Triangle Added. ID = %d\n", obj.id);
+}
+
+void addCircle()
+{
+    Object obj;
+
+    obj.id = nextID++;
+    obj.type = 4;
+
+    printf("Enter center x y: ");
+    scanf("%d%d", &obj.x1, &obj.y1);
+
+    printf("Enter radius: ");
+    scanf("%d", &obj.radius);
+
+    objects[count++] = obj;
+
+    redrawAll();
+
+    printf("Circle Added. ID = %d\n", obj.id);
+}
+
+/* ---------------- Delete Object ---------------- */
+
+void deleteObject()
+{
+    int id;
+    int pos = -1;
+
+    printf("Enter Object ID to delete: ");
+    scanf("%d", &id);
+
+    for(int i = 0; i < count; i++)
+    {
+        if(objects[i].id == id)
+        {
+            pos = i;
+            break;
+        }
+    }
+
+    if(pos == -1)
+    {
+        printf("Object Not Found!\n");
+        return;
+    }
+
+    for(int i = pos; i < count - 1; i++)
+    {
+        objects[i] = objects[i + 1];
+    }
+
+    count--;
+
+    redrawAll();
+
+    printf("Object Deleted Successfully.\n");
+}
+
+/* ---------------- Modify Object ---------------- */
+
+void modifyObject()
+{
+    int id;
+
+    printf("Enter Object ID to modify: ");
+    scanf("%d", &id);
+
+    for(int i = 0; i < count; i++)
+    {
+        if(objects[i].id == id)
+        {
+            int type = objects[i].type;
+
+            if(type == 1)
+            {
+                printf("Enter new x1 y1: ");
+                scanf("%d%d", &objects[i].x1, &objects[i].y1);
+
+                printf("Enter new x2 y2: ");
+                scanf("%d%d", &objects[i].x2, &objects[i].y2);
+            }
+
+            else if(type == 2)
+            {
+                printf("Enter new x y: ");
+                scanf("%d%d", &objects[i].x1, &objects[i].y1);
+
+                printf("Enter new width height: ");
+                scanf("%d%d",
+                      &objects[i].width,
+                      &objects[i].height);
+            }
+
+            else if(type == 3)
+            {
+                printf("Enter new center x y: ");
+                scanf("%d%d",
+                      &objects[i].x1,
+                      &objects[i].y1);
+
+                printf("Enter new height: ");
+                scanf("%d",
+                      &objects[i].height);
+            }
+
+            else if(type == 4)
+            {
+                printf("Enter new center x y: ");
+                scanf("%d%d",
+                      &objects[i].x1,
+                      &objects[i].y1);
+
+                printf("Enter new radius: ");
+                scanf("%d",
+                      &objects[i].radius);
+            }
+
+            redrawAll();
+
+            printf("Object Modified Successfully.\n");
+            return;
+        }
+    }
+
+    printf("Object Not Found!\n");
+}
+
+/* ---------------- Show Object List ---------------- */
+
+void showObjects()
+{
+    printf("\nStored Objects:\n");
+
+    for(int i = 0; i < count; i++)
+    {
+        printf("ID = %d   Type = %d\n",
+               objects[i].id,
+               objects[i].type);
+    }
+
+    if(count == 0)
+        printf("No Objects Available.\n");
+}
+
+/* ---------------- Main ---------------- */
+
+int main()
+{
+    int choice;
+
+    initCanvas();
+
+    do
+    {
+        printf("\n========== 2D GRAPHICS EDITOR ==========\n");
+        printf("1. Draw Line\n");
+        printf("2. Draw Rectangle\n");
+        printf("3. Draw Triangle\n");
+        printf("4. Draw Circle\n");
+        printf("5. Delete Object\n");
+        printf("6. Modify Object\n");
+        printf("7. Display Canvas\n");
+        printf("8. Show Object List\n");
+        printf("9. Exit\n");
+
+        printf("Enter Choice: ");
+        scanf("%d", &choice);
+
+        switch(choice)
+        {
+            case 1:
+                addLine();
+                break;
+
+            case 2:
+                addRectangle();
+                break;
+
+            case 3:
+                addTriangle();
+                break;
+
+            case 4:
+                addCircle();
+                break;
+
+            case 5:
+                deleteObject();
+                break;
+
+            case 6:
+                modifyObject();
+                break;
+
+            case 7:
+                displayCanvas();
+                break;
+
+            case 8:
+                showObjects();
+                break;
+
+            case 9:
+                printf("Exiting...\n");
+                break;
+
+            default:
+                printf("Invalid Choice!\n");
+        }
+
+    } while(choice != 9);
+
+    return 0;
+}
+
+
+
+
+response
+This program is a 2D Graphics Editor in C that allows the user to draw, modify, delete, and display simple shapes on a text-based canvas.
+
+1. Header Files
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+* stdio.h ? Input/Output functions (printf, scanf)
+* stdlib.h ? Standard utilities
+* math.h ? Mathematical operations
+
+2. Constants
+#define ROWS 30
+#define COLS 60
+#define MAX_OBJECTS 100
+* Canvas size = 30 rows × 60 columns
+* Maximum objects that can be stored = 100
+
+3. Canvas
+char canvas[ROWS][COLS];
+A 2D character array acts as the drawing area.
+Example:
+_ _ _ _ _ _
+_ _ _ _ _ _
+_ _ _ _ _ _
+_ represents an empty pixel.
+
+4. Object Structure
+typedef struct
+{
+    int id;
+    int type;
+
+    int x1, y1;
+    int x2, y2;
+
+    int width, height;
+    int radius;
+
+} Object;
+Stores information about a shape.
+Members
+VariablePurposeidUnique object IDtypeShape typex1,y1Starting point or centerx2,y2Ending point (for line)width,heightRectangle sizeradiusCircle radiusShape Types
+1 = Line
+2 = Rectangle
+3 = Triangle
+4 = Circle
+
+5. Object Storage
+Object objects[MAX_OBJECTS];
+int count = 0;
+int nextID = 1;
+objects[]
+Stores all shapes.
+count
+Number of shapes currently present.
+nextID
+Provides unique IDs.
+Example:
+Line -> ID 1
+Rectangle -> ID 2
+Circle -> ID 3
+
+6. Initialize Canvas
+void initCanvas()
+Fills the entire canvas with _.
+canvas[i][j] = '_';
+Example:
+_ _ _ _ _
+_ _ _ _ _
+_ _ _ _ _
+
+7. Display Canvas
+void displayCanvas()
+Prints every element of the canvas.
+printf("%c ", canvas[i][j]);
+Output example:
+_ _ * * _
+_ _ * * _
+_ _ _ _ _
+
+8. Drawing Functions
+
+A. Draw Line
+void drawLineCanvas(int x1,int y1,int x2,int y2)
+Supports:
+Horizontal Line
+if(y1 == y2)
+Example:
+******
+
+Vertical Line
+else if(x1 == x2)
+Example:
+*
+*
+*
+*
+Draws using:
+canvas[y][x]='*';
+
+B. Draw Rectangle
+void drawRectangleCanvas(int x,int y,int width,int height)
+Nested loops fill rectangle.
+for(i=y;i<y+height;i++)
+{
+    for(j=x;j<x+width;j++)
+    {
+        canvas[i][j]='*';
+    }
+}
+Example:
+*****
+*****
+*****
+
+C. Draw Triangle
+void drawTriangleCanvas(int x,int y,int height)
+Creates a pyramid.
+Example:
+    *
+   ***
+  *****
+ *******
+Logic:
+for(i=0;i<height;i++)
+{
+   for(j=x-i;j<=x+i;j++)
+Width increases every row.
+
+D. Draw Circle
+void drawCircleCanvas(int cx,int cy,int r)
+Uses circle equation:
+(x-cx)^2 + (y-cy)^2 <= r^2
+Code:
+int d = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+
+if(d <= r*r)
+Marks points inside circle.
+Example:
+   ***
+ *****
+ *****
+  ***
+
+9. Redraw All Objects
+void redrawAll()
+Important function.
+Step 1
+Clear canvas.
+initCanvas();
+Step 2
+Loop through all stored objects.
+for(i=0;i<count;i++)
+Step 3
+Draw each object again.
+switch(objects[i].type)
+This ensures deleted/modified objects are updated correctly.
+
+10. Add Line
+void addLine()
+Gets coordinates.
+scanf("%d%d",&obj.x1,&obj.y1);
+scanf("%d%d",&obj.x2,&obj.y2);
+Assigns:
+obj.id = nextID++;
+obj.type = 1;
+Stores:
+objects[count++] = obj;
+Redraws canvas.
+
+11. Add Rectangle
+void addRectangle()
+Input:
+x y
+width height
+Stores:
+obj.type = 2;
+
+12. Add Triangle
+void addTriangle()
+Input:
+center x y
+height
+Stores:
+obj.type = 3;
+
+13. Add Circle
+void addCircle()
+Input:
+center x y
+radius
+Stores:
+obj.type = 4;
+
+14. Delete Object
+void deleteObject()
+User enters ID.
+Example:
+Delete ID = 2
+Search:
+for(i=0;i<count;i++)
+If found:
+pos = i;
+Shift remaining objects left:
+for(i=pos;i<count-1;i++)
+{
+    objects[i]=objects[i+1];
+}
+Reduce count:
+count--;
+Redraw canvas.
+
+15. Modify Object
+void modifyObject()
+User enters ID.
+Searches object.
+Depending on shape type:
+Line
+new x1 y1
+new x2 y2
+Rectangle
+new x y
+new width height
+Triangle
+new center
+new height
+Circle
+new center
+new radius
+After modification:
+redrawAll();
+
+16. Show Object List
+void showObjects()
+Displays all stored objects.
+Example:
+Stored Objects:
+
+ID = 1 Type = 1
+ID = 2 Type = 2
+ID = 3 Type = 4
+If empty:
+No Objects Available.
+
+17. Main Function
+int main()
+Starts editor.
+initCanvas();
+Shows menu repeatedly.
+do
+{
+   ...
+} while(choice != 9);
+
+Menu Options
+1. Draw Line
+2. Draw Rectangle
+3. Draw Triangle
+4. Draw Circle
+5. Delete Object
+6. Modify Object
+7. Display Canvas
+8. Show Object List
+9. Exit
+Uses:
+switch(choice)
+to call appropriate function.
+
+Example Execution
+Draw Rectangle
+Input:
+2
+Enter x y: 5 5
+Enter width height: 6 3
+Draw Circle
+Input:
+4
+Enter center x y: 20 10
+Enter radius: 4
+Display Canvas
+Output:
+_____******____________________
+_____******_______***__________
+_____******_____*******________
+_______________*********_______
+________________*******________
+_________________*****_________
+__________________***__________
+
+Time Complexity
+OperationComplexityAdd ObjectO(1)Delete ObjectO(n)Modify ObjectO(n)Show ObjectsO(n)Redraw AllO(n × canvas area)where n = number of stored objects.
+Summary
+This program implements a simple text-based CAD/graphics editor using:
+* Structures (struct)
+* Arrays
+* Functions
+* Object management (Add, Modify, Delete)
+* Shape drawing algorithms (Line, Rectangle, Triangle, Circle)
+* Canvas redrawing mechanism
+It demonstrates the basic concepts behind graphical editors while using only console output.
+
